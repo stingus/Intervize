@@ -9,6 +9,7 @@ import { LaptopsModule } from './laptops/laptops.module';
 import { CheckoutsModule } from './checkouts/checkouts.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BullBoardModule } from './bull-board/bull-board.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaService } from './config/prisma.service';
 
@@ -37,6 +38,7 @@ import { PrismaService } from './config/prisma.service';
     CheckoutsModule,
     NotificationsModule,
     BullBoardModule,
+    DashboardModule,
   ],
   providers: [
     PrismaService,
