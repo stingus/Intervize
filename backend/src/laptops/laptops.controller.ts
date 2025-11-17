@@ -10,7 +10,9 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { LaptopsService } from './laptops.service';
 import { CreateLaptopDto } from './dto/create-laptop.dto';
 import { UpdateLaptopDto } from './dto/update-laptop.dto';
@@ -78,13 +80,12 @@ export class LaptopsController {
 
   @Get(':id/qr-code')
   @Roles('admin')
-  async getQRCode(@Param('id') id: string) {
-    const qrCode = await this.laptopsService.generateQRCodeImage(id);
-    return {
-      success: true,
-      data: { qrCode },
-      message: 'QR code generated successfully',
-    };
+  async getQRCode(@Param('id') id: string, @Res() res: Response) {
+    const qrCodeBuffer = await this.laptopsService.generateQRCodeImage(id);
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', 'attachment; filename="qr-code.png"');
+    res.send(qrCodeBuffer);
   }
 
   @Patch(':id')

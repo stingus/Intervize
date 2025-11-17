@@ -151,9 +151,29 @@ export class LaptopsService {
     };
   }
 
-  async generateQRCodeImage(laptopId: string): Promise<string> {
+  async generateQRCodeImage(laptopId: string): Promise<Buffer> {
     const laptop = await this.findOne(laptopId);
-    return this.generateQRCode(laptop.uniqueId);
+
+    try {
+      const appUrl = this.configService.get<string>('APP_URL');
+      const scanUrl = `${appUrl}/scan/${laptop.uniqueId}`;
+
+      // Generate QR code as PNG buffer
+      const qrCodeBuffer = await QRCode.toBuffer(scanUrl, {
+        width: 300,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        type: 'png',
+      });
+
+      return qrCodeBuffer;
+    } catch (error) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.SRV_QR_GENERATION_FAILED,
+        message: 'Failed to generate QR code',
+        details: { error: error.message },
+      });
+    }
   }
 
   private generateUniqueId(): string {
