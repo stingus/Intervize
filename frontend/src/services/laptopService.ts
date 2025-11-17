@@ -17,7 +17,7 @@ export const laptopService = {
     return response.data.data;
   },
 
-  async createLaptop(data: Omit<Laptop, 'id' | 'createdAt' | 'updatedAt'>): Promise<Laptop> {
+  async createLaptop(data: Omit<Laptop, 'id' | 'uniqueId' | 'createdAt' | 'updatedAt'>): Promise<Laptop> {
     const response = await axiosInstance.post<ApiResponse<Laptop>>('/laptops', data);
     return response.data.data;
   },
