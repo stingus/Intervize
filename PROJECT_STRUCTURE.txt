@@ -1,0 +1,326 @@
+LAPTOP CHECK-OUT SYSTEM - PROJECT STRUCTURE
+===========================================
+
+laptop-checkout-system/
+│
+├── 📄 README.md                          # Main project documentation
+├── 📄 IMPLEMENTATION_SUMMARY.md          # Detailed implementation summary
+├── 📄 QUICK_REFERENCE.md                 # Quick command reference
+├── 📄 PHASE_1_2_COMPLETE.md             # Phase completion summary
+├── 📄 PROJECT_STRUCTURE.txt             # This file
+│
+├── 🐳 docker-compose.yml                 # Docker Compose configuration
+│   ├── PostgreSQL 16 container
+│   ├── Redis 7 container
+│   └── Backend NestJS container
+│
+├── 📁 backend/                           # NestJS Backend Application
+│   │
+│   ├── 📁 src/                           # Source code
+│   │   │
+│   │   ├── 📁 auth/                      # Authentication Module
+│   │   │   ├── 📁 dto/
+│   │   │   │   ├── login.dto.ts
+│   │   │   │   └── refresh-token.dto.ts
+│   │   │   ├── 📁 strategies/
+│   │   │   │   └── jwt.strategy.ts      # JWT Passport Strategy
+│   │   │   ├── auth.controller.ts       # Auth endpoints
+│   │   │   ├── auth.service.ts          # Auth business logic
+│   │   │   └── auth.module.ts           # Auth module config
+│   │   │
+│   │   ├── 📁 users/                     # User Management Module
+│   │   │   ├── 📁 dto/
+│   │   │   │   ├── create-user.dto.ts
+│   │   │   │   └── update-user.dto.ts
+│   │   │   ├── users.controller.ts      # User endpoints
+│   │   │   ├── users.service.ts         # User business logic
+│   │   │   └── users.module.ts          # User module config
+│   │   │
+│   │   ├── 📁 laptops/                   # Laptop Management Module
+│   │   │   ├── 📁 dto/
+│   │   │   │   ├── create-laptop.dto.ts
+│   │   │   │   └── update-laptop.dto.ts
+│   │   │   ├── laptops.controller.ts    # Laptop endpoints
+│   │   │   ├── laptops.service.ts       # Laptop business logic + QR
+│   │   │   └── laptops.module.ts        # Laptop module config
+│   │   │
+│   │   ├── 📁 common/                    # Shared Utilities
+│   │   │   ├── 📁 decorators/
+│   │   │   │   ├── current-user.decorator.ts  # @CurrentUser
+│   │   │   │   └── roles.decorator.ts         # @Roles
+│   │   │   ├── 📁 filters/
+│   │   │   │   └── http-exception.filter.ts   # Global error handler
+│   │   │   ├── 📁 guards/
+│   │   │   │   ├── jwt-auth.guard.ts          # JWT authentication
+│   │   │   │   └── roles.guard.ts             # Role-based access
+│   │   │   └── 📁 enums/
+│   │   │       └── error-codes.enum.ts        # Error code taxonomy
+│   │   │
+│   │   ├── 📁 config/                    # Configuration Services
+│   │   │   └── prisma.service.ts        # Prisma client service
+│   │   │
+│   │   ├── app.module.ts                # Root application module
+│   │   └── main.ts                      # Application bootstrap
+│   │
+│   ├── 📁 prisma/                        # Database
+│   │   ├── schema.prisma                # Database schema (6 tables)
+│   │   │   ├── users (soft delete)
+│   │   │   ├── laptops (soft delete)
+│   │   │   ├── checkouts
+│   │   │   ├── lost_found_events
+│   │   │   ├── audit_logs
+│   │   │   └── notification_logs
+│   │   └── seed.ts                      # Seed data script
+│   │
+│   ├── 📄 .env                          # Environment variables (active)
+│   ├── 📄 .env.example                  # Environment template
+│   ├── 📄 .gitignore                    # Git ignore rules
+│   ├── 📄 .dockerignore                 # Docker ignore rules
+│   │
+│   ├── 🐳 Dockerfile                     # Backend Docker image
+│   │
+│   ├── 📄 package.json                  # Dependencies & scripts
+│   ├── 📄 tsconfig.json                 # TypeScript configuration
+│   ├── 📄 nest-cli.json                 # NestJS CLI configuration
+│   │
+│   └── 📄 SETUP.md                      # Detailed setup guide
+│
+└── 📁 frontend/                          # React Frontend (Future)
+    └── (To be implemented in later phases)
+
+
+DATABASE SCHEMA (PostgreSQL)
+=============================
+
+┌─────────────────┐       ┌──────────────────┐       ┌─────────────────┐
+│     users       │       │     laptops      │       │   checkouts     │
+├─────────────────┤       ├──────────────────┤       ├─────────────────┤
+│ id (PK)         │◄──┐   │ id (PK)          │◄──┐   │ id (PK)         │
+│ email (unique)  │   │   │ unique_id        │   │   │ laptop_id (FK)  │
+│ password_hash   │   │   │ serial_number    │   │   │ user_id (FK)    │
+│ name            │   │   │ make             │   │   │ checked_out_at  │
+│ role            │   │   │ model            │   │   │ checked_in_at   │
+│ group_name      │   │   │ status           │   │   │ status          │
+│ team            │   │   │ qr_code_url      │   │   │ created_at      │
+│ created_at      │   │   │ created_at       │   │   │ updated_at      │
+│ updated_at      │   │   │ updated_at       │   │   │                 │
+│ deleted_at *    │   │   │ deleted_at *     │   │   │                 │
+└─────────────────┘   │   └──────────────────┘   │   └─────────────────┘
+                      │                          │
+        ┌─────────────┴──────────────┐          │
+        │                             │          │
+┌─────────────────────┐     ┌─────────────────────────┐
+│ lost_found_events   │     │   notification_logs     │
+├─────────────────────┤     ├─────────────────────────┤
+│ id (PK)             │     │ id (PK)                 │
+│ laptop_id (FK)      │     │ notification_type       │
+│ checkout_id (FK)    │     │ recipient_email         │
+│ original_user_id    │     │ recipient_user_id (FK)  │
+│ finder_user_id      │     │ status                  │
+│ event_timestamp     │     │ sent_at                 │
+│ duration_minutes    │     │ retry_count             │
+│ created_at          │     │ created_at              │
+└─────────────────────┘     │ updated_at              │
+                            └─────────────────────────┘
+        ┌─────────────┐
+        │ audit_logs  │
+        ├─────────────┤
+        │ id (PK)     │
+        │ user_id (FK)│
+        │ action      │
+        │ entity_type │
+        │ entity_id   │
+        │ details     │
+        │ ip_address  │
+        │ created_at  │
+        └─────────────┘
+
+* = Soft delete enabled
+
+
+API ENDPOINTS (Version 1)
+==========================
+
+Authentication (Public)
+-----------------------
+POST   /api/v1/auth/login           # Login with email/password
+POST   /api/v1/auth/logout          # Logout
+POST   /api/v1/auth/refresh-token   # Refresh access token
+GET    /api/v1/auth/me              # Get current user
+
+Users (Protected)
+-----------------
+GET    /api/v1/users                # List all users (Admin)
+GET    /api/v1/users/:id            # Get user by ID (Admin)
+POST   /api/v1/users                # Create user (Admin)
+PATCH  /api/v1/users/:id            # Update user (Admin)
+DELETE /api/v1/users/:id            # Delete user (Admin)
+GET    /api/v1/users/me             # Get own profile
+PATCH  /api/v1/users/me             # Update own profile
+
+Laptops (Protected)
+-------------------
+GET    /api/v1/laptops              # List all laptops
+GET    /api/v1/laptops/:id          # Get laptop by ID
+GET    /api/v1/laptops/unique/:uid  # Get by unique ID (QR scan)
+POST   /api/v1/laptops              # Create laptop (Admin)
+PATCH  /api/v1/laptops/:id          # Update laptop (Admin)
+DELETE /api/v1/laptops/:id          # Delete laptop (Admin)
+GET    /api/v1/laptops/:id/history  # Checkout history (Admin)
+GET    /api/v1/laptops/:id/qr-code  # Generate QR code (Admin)
+
+
+TECHNOLOGY STACK
+================
+
+Backend Framework
+-----------------
+• NestJS 11.1.9         - Enterprise Node.js framework
+• TypeScript 5.9.3      - Strict mode enabled
+• Node.js 18+           - JavaScript runtime
+
+Database & ORM
+--------------
+• PostgreSQL 16         - Relational database
+• Prisma 6.19.0        - Type-safe ORM
+• Redis 7              - Cache & queue
+
+Authentication
+--------------
+• Passport.js 0.7.0    - Auth middleware
+• JWT 11.0.1           - Token authentication
+• bcryptjs 3.0.3       - Password hashing
+
+Queue System
+------------
+• Bull 4.16.5          - Redis-based queue
+• @nestjs/bull 11.0.4  - NestJS integration
+• Bull Board 6.14.2    - Queue monitoring
+
+Security
+--------
+• Helmet 8.1.0         - Security headers
+• Throttler 6.4.0      - Rate limiting
+• class-validator 0.14.2 - Input validation
+
+Utilities
+---------
+• qrcode 1.5.4         - QR code generation
+• class-transformer 0.5.1 - DTO transformation
+
+Development
+-----------
+• Docker Compose       - Container orchestration
+• pnpm                - Package manager
+• Prisma Studio       - Database GUI
+
+
+DEVELOPMENT COMMANDS
+====================
+
+# Start databases
+docker compose up -d postgres redis
+
+# Install dependencies
+cd backend && pnpm install
+
+# Database setup
+pnpm prisma generate                   # Generate Prisma Client
+pnpm prisma migrate dev --name init    # Run migrations
+pnpm prisma:seed                       # Seed database
+
+# Development
+pnpm run start:dev                     # Start dev server
+pnpm run build                         # Build for production
+pnpm run start:prod                    # Run production
+
+# Database management
+pnpm prisma studio                     # Open database GUI
+pnpm prisma migrate dev --name xyz     # Create migration
+pnpm prisma migrate reset              # Reset database
+
+
+SEED DATA
+=========
+
+Admin User:
+  Email:    admin@example.com
+  Password: Admin123!
+  Role:     admin
+
+User:
+  Email:    user@example.com
+  Password: User123!
+  Role:     interviewer
+
+Laptops:
+  1. Dell Latitude 5420 (Available)
+  2. HP EliteBook 840 G8 (Available)
+  3. Lenovo ThinkPad X1 Carbon (Maintenance)
+
+
+PHASE COMPLETION STATUS
+========================
+
+✅ Phase 1: Foundation & Setup (COMPLETE)
+  - Project structure
+  - Database schema
+  - Docker Compose
+  - Redis & Bull
+  - Authentication
+  - API versioning
+  - Error handling
+  - Security
+
+✅ Phase 2: Core Laptop Management (COMPLETE)
+  - Laptop CRUD
+  - QR code generation
+  - User CRUD
+  - Soft delete
+
+⏳ Phase 3: Check-out/Check-in Flow (NEXT)
+⏳ Phase 4: Lost & Found
+⏳ Phase 5: Admin Dashboard & Overdue
+⏳ Phase 6: User Management Polish
+⏳ Phase 7: Testing
+⏳ Phase 8: Deployment
+
+
+DOCUMENTATION FILES
+===================
+
+📄 README.md                    - Main project documentation
+📄 SETUP.md                     - Detailed setup guide
+📄 QUICK_REFERENCE.md           - Quick commands & examples
+📄 IMPLEMENTATION_SUMMARY.md    - Comprehensive summary
+📄 PHASE_1_2_COMPLETE.md       - Phase completion report
+📄 PROJECT_STRUCTURE.txt        - This file
+
+
+NEXT STEPS
+==========
+
+1. Start Docker services:
+   docker compose up -d postgres redis
+
+2. Setup backend:
+   cd backend
+   pnpm install
+   pnpm prisma generate
+   pnpm prisma migrate dev --name init
+   pnpm prisma:seed
+
+3. Start development server:
+   pnpm run start:dev
+
+4. Test API:
+   curl -X POST http://localhost:3000/api/v1/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@example.com","password":"Admin123!"}'
+
+5. Begin Phase 3 implementation
+
+
+Created: November 16, 2025
+Status: Phase 1 & 2 Complete ✅
+Next: Phase 3 - Check-out/Check-in Flow

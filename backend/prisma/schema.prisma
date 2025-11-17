@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  interviewer
+  admin
+}
+
+enum LaptopStatus {
+  available
+  checked_out
+  maintenance
+  retired
+}
+
+enum CheckoutStatus {
+  active
+  completed
+}
+
+enum NotificationType {
+  overdue
+  lost_found
+  user_invitation
+  password_reset
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  bounced
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  role          UserRole  @default(interviewer)
+  groupName     String?   @map("group_name")
+  team          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  // Relations
+  checkouts          Checkout[]
+  lostLaptops        LostFoundEvent[] @relation("OriginalUser")
+  foundLaptops       LostFoundEvent[] @relation("FinderUser")
+  auditLogs          AuditLog[]
+  notificationLogs   NotificationLog[]
+
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Laptop {
+  id           String        @id @default(uuid())
+  uniqueId     String        @unique @map("unique_id")
+  serialNumber String        @map("serial_number")
+  make         String
+  model        String
+  status       LaptopStatus  @default(available)
+  qrCodeUrl    String?       @map("qr_code_url")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
+
+  // Relations
+  checkouts        Checkout[]
+  lostFoundEvents  LostFoundEvent[]
+
+  @@index([status])
+  @@index([uniqueId])
+  @@index([deletedAt])
+  @@map("laptops")
+}
+
+model Checkout {
+  id            String         @id @default(uuid())
+  laptopId      String         @map("laptop_id")
+  userId        String         @map("user_id")
+  checkedOutAt  DateTime       @default(now()) @map("checked_out_at")
+  checkedInAt   DateTime?      @map("checked_in_at")
+  status        CheckoutStatus @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  laptop          Laptop           @relation(fields: [laptopId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  lostFoundEvents LostFoundEvent[]
+
+  @@index([laptopId])
+  @@index([userId])
+  @@index([status])
+  @@index([checkedOutAt])
+  @@map("checkouts")
+}
+
+model LostFoundEvent {
+  id               String   @id @default(uuid())
+  laptopId         String   @map("laptop_id")
+  checkoutId       String   @map("checkout_id")
+  originalUserId   String   @map("original_user_id")
+  finderUserId     String   @map("finder_user_id")
+  eventTimestamp   DateTime @default(now()) @map("event_timestamp")
+  durationMinutes  Int      @map("duration_minutes")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  laptop       Laptop   @relation(fields: [laptopId], references: [id])
+  checkout     Checkout @relation(fields: [checkoutId], references: [id])
+  originalUser User     @relation("OriginalUser", fields: [originalUserId], references: [id])
+  finderUser   User     @relation("FinderUser", fields: [finderUserId], references: [id])
+
+  @@index([laptopId])
+  @@index([eventTimestamp])
+  @@map("lost_found_events")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model NotificationLog {
+  id                String             @id @default(uuid())
+  notificationType  NotificationType   @map("notification_type")
+  recipientEmail    String             @map("recipient_email")
+  recipientUserId   String?            @map("recipient_user_id")
+  subject           String
+  body              String?
+  relatedEntityType String?            @map("related_entity_type")
+  relatedEntityId   String?            @map("related_entity_id")
+  status            NotificationStatus @default(pending)
+  sentAt            DateTime?          @map("sent_at")
+  failedAt          DateTime?          @map("failed_at")
+  errorMessage      String?            @map("error_message")
+  retryCount        Int                @default(0) @map("retry_count")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  recipientUser User? @relation(fields: [recipientUserId], references: [id])
+
+  @@index([notificationType])
+  @@index([recipientUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([relatedEntityType, relatedEntityId])
+  @@map("notification_logs")
+}
