@@ -48,9 +48,9 @@ Create a `Dockerfile`:
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY ../frontend/package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
-COPY . .
+COPY ../frontend .
 RUN pnpm build
 
 FROM nginx:alpine
