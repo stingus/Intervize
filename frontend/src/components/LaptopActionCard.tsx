@@ -180,6 +180,17 @@ export const LaptopActionCard = ({
   const userHasCurrentCheckout = currentCheckout !== null;
   const isThisLaptopCheckedOutByUser =
     currentCheckout?.laptop?.uniqueId === laptop.uniqueId;
+
+  // Debug logging to understand the data structure
+  console.log('LaptopActionCard Debug:', {
+    currentCheckout,
+    currentCheckoutLaptopUniqueId: currentCheckout?.laptop?.uniqueId,
+    scannedLaptopUniqueId: laptop.uniqueId,
+    isThisLaptopCheckedOutByUser,
+    userHasCurrentCheckout,
+    laptopStatus: laptop.status,
+  });
+
   const canCheckout = laptop.status === 'available' && !userHasCurrentCheckout;
   const canCheckin = isThisLaptopCheckedOutByUser;
   const canReportLost = isThisLaptopCheckedOutByUser;

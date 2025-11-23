@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Param,
 } from '@nestjs/common';
 import { CheckoutsService } from './checkouts.service';
 import { CheckoutLaptopDto } from './dto/checkout-laptop.dto';
@@ -123,6 +124,36 @@ export class CheckoutsController {
       success: true,
       data: events,
       message: 'Lost/found events retrieved successfully',
+    };
+  }
+
+  @Get('status/:laptopUniqueId')
+  async getCheckoutStatus(
+    @Param('laptopUniqueId') laptopUniqueId: string,
+    @CurrentUser() user: any,
+  ) {
+    const status = await this.checkoutsService.getCheckoutStatus(
+      laptopUniqueId,
+      user.sub,
+    );
+    return {
+      success: true,
+      data: status,
+      message: 'Checkout status retrieved successfully',
+    };
+  }
+
+  @Get('my-current')
+  async getMyCurrentCheckout(@CurrentUser() user: any) {
+    const checkout = await this.checkoutsService.getCurrentUserCheckout(
+      user.sub,
+    );
+    return {
+      success: true,
+      data: checkout,
+      message: checkout
+        ? 'Current checkout retrieved successfully'
+        : 'No active checkout found',
     };
   }
 }

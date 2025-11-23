@@ -59,6 +59,24 @@ export class CheckoutsService {
       });
     }
 
+    // Business rule: Check if user already has an active checkout
+    const existingCheckout = await this.prisma.checkout.findFirst({
+      where: {
+        userId: user.id,
+        status: 'active',
+      },
+      include: {
+        laptop: true,
+      },
+    });
+
+    if (existingCheckout) {
+      throw new ConflictException({
+        code: ErrorCode.BIZ_USER_HAS_ACTIVE_CHECKOUT,
+        message: `User already has an active checkout for laptop ${existingCheckout.laptop.uniqueId}. Please check in the current laptop before checking out another one.`,
+      });
+    }
+
     // Create checkout and update laptop status in a transaction
     const checkout = await this.prisma.$transaction(async (tx) => {
       // Create checkout record
@@ -149,11 +167,14 @@ export class CheckoutsService {
       });
     }
 
-    // Verify the user checking in is the one who checked out
+    // FIXED: Verify the user checking in IS the one who checked out
+    // Only the user who checked out can check in (normal check-in flow)
+    // If a different user finds it, they should use the "report found" endpoint
     if (activeCheckout.userId !== userId) {
       throw new BadRequestException({
         code: ErrorCode.VAL_UNAUTHORIZED_CHECKIN,
-        message: 'Only the user who checked out this laptop can check it in',
+        message:
+          'You cannot check in this laptop because you are not the one who checked it out. If you found this laptop, please use the "Report Found" feature instead.',
       });
     }
 
@@ -565,5 +586,91 @@ export class CheckoutsService {
     });
 
     return events;
+  }
+
+  async getCheckoutStatus(laptopUniqueId: string, userId: string) {
+    // Find laptop by unique ID
+    const laptop = await this.prisma.laptop.findFirst({
+      where: {
+        uniqueId: laptopUniqueId,
+        deletedAt: null,
+      },
+    });
+
+    if (!laptop) {
+      throw new NotFoundException({
+        code: ErrorCode.NOT_FOUND_LAPTOP,
+        message: 'Laptop not found',
+      });
+    }
+
+    // Find active checkout
+    const activeCheckout = await this.prisma.checkout.findFirst({
+      where: {
+        laptopId: laptop.id,
+        status: 'active',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Determine the available actions based on checkout status and user
+    const isCheckedOut = laptop.status === 'checked_out' && activeCheckout;
+    const isCheckedOutByCurrentUser = isCheckedOut && activeCheckout.userId === userId;
+    const isCheckedOutByDifferentUser = isCheckedOut && activeCheckout.userId !== userId;
+
+    return {
+      laptop: {
+        id: laptop.id,
+        uniqueId: laptop.uniqueId,
+        serialNumber: laptop.serialNumber,
+        make: laptop.make,
+        model: laptop.model,
+        status: laptop.status,
+      },
+      checkout: activeCheckout ? {
+        id: activeCheckout.id,
+        checkedOutAt: activeCheckout.checkedOutAt,
+        user: activeCheckout.user,
+        durationMinutes: Math.floor(
+          (new Date().getTime() - activeCheckout.checkedOutAt.getTime()) / (1000 * 60),
+        ),
+      } : null,
+      availableActions: {
+        canCheckout: laptop.status === 'available',
+        canCheckin: isCheckedOutByCurrentUser,
+        canReportFound: isCheckedOutByDifferentUser,
+        canReportLost: isCheckedOutByCurrentUser,
+      },
+    };
+  }
+
+  async getCurrentUserCheckout(userId: string) {
+    const checkout = await this.prisma.checkout.findFirst({
+      where: {
+        userId,
+        status: 'active',
+      },
+      include: {
+        laptop: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return checkout;
   }
 }

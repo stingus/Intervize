@@ -27,3 +27,11 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# Test results and artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+screenshots/
+coverage/
+*.lcov

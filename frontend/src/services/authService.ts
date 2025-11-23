@@ -4,14 +4,14 @@ import type { LoginCredentials, AuthUser, User, ApiResponse } from '../types';
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     const response = await axiosInstance.post<ApiResponse<AuthUser>>('/auth/login', credentials);
-    const { user, accessToken, refreshToken } = response.data.data;
+    const authData = response.data.data;
 
     // Store tokens and user in localStorage
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('accessToken', authData.tokens.accessToken);
+    localStorage.setItem('refreshToken', authData.tokens.refreshToken);
+    localStorage.setItem('user', JSON.stringify(authData.user));
 
-    return response.data.data;
+    return authData;
   },
 
   async logout(): Promise<void> {
