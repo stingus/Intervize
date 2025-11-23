@@ -11,7 +11,7 @@ Get the Laptop Check-out System frontend up and running in 5 minutes.
 
 ```bash
 # Navigate to frontend directory
-cd laptop-checkout-system/frontend
+cd Intervize/frontend
 
 # Install dependencies
 pnpm install
@@ -131,15 +131,15 @@ rm -rf dist
 
 ## Next Steps
 
-- Read [README.md](./README.md) for full documentation
-- Read [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment
+- Read [README.md](../README.md) for full documentation
+- Read [DEPLOYMENT.md](../DEPLOYMENT.md) for production deployment
 - Check backend API documentation for endpoint details
 
 ## Need Help?
 
 - Check browser console for errors
 - Verify backend API is running
-- Review [README.md](./README.md) for detailed information
+- Review [README.md](../README.md) for detailed information
 - Contact the development team
 
 ## Features Overview

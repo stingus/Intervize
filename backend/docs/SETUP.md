@@ -6,7 +6,7 @@
 
 ```bash
 # From the root directory
-cd laptop-checkout-system
+cd Intervize
 docker compose up -d postgres redis
 ```
 

@@ -64,7 +64,7 @@ laptop-checkout-system/
 ### 1. Clone and Setup
 
 ```bash
-cd laptop-checkout-system/backend
+cd Intervize/backend
 cp .env.example .env
 # Edit .env file with your configuration
 ```

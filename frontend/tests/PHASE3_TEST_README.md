@@ -74,7 +74,7 @@ frontend/tests/
 
 ### Run All Phase 3 Tests
 ```bash
-cd /Users/arthur/Projects/playground/claude/laptop-checkout-system/frontend
+cd /Users/arthur/Projects/playground/claude/Intervize/frontend
 pnpm test:e2e tests/e2e/03-regular-user-qr-scan.spec.ts
 ```
 

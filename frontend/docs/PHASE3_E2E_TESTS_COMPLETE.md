@@ -182,7 +182,7 @@ All Phase 3 endpoints are covered:
 
 ### Quick Start
 ```bash
-cd /Users/arthur/Projects/playground/claude/laptop-checkout-system/frontend
+cd /Users/arthur/Projects/playground/claude/Intervize/frontend
 
 # Verify setup
 ./tests/verify-setup.sh

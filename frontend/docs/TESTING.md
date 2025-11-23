@@ -10,11 +10,11 @@ Ensure all services are running:
 
 ```bash
 # Terminal 1: Start backend services (from root directory)
-cd laptop-checkout-system
+cd Intervize
 docker compose up -d postgres redis
 
 # Terminal 2: Start backend (from backend directory)
-cd laptop-checkout-system/backend
+cd Intervize/backend
 pnpm install
 pnpm prisma generate
 pnpm prisma migrate dev
@@ -22,7 +22,7 @@ pnpm prisma db seed
 pnpm run start:dev
 
 # Terminal 3: Start frontend (from frontend directory)
-cd laptop-checkout-system/frontend
+cd Intervize/frontend
 pnpm install
 pnpm dev
 ```
@@ -38,7 +38,7 @@ pnpm dev
 
 ```bash
 # From frontend directory
-cd laptop-checkout-system/frontend
+cd Intervize/frontend
 
 # Run all tests
 pnpm test

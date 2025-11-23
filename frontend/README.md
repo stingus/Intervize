@@ -74,7 +74,7 @@ A modern React + TypeScript frontend application for managing laptop inventory a
 
 1. **Clone the repository** (if not already done)
    ```bash
-   cd /path/to/laptop-checkout-system/frontend
+   cd /path/to/Intervize/frontend
    ```
 
 2. **Install dependencies**

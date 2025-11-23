@@ -119,7 +119,7 @@ pnpm test:e2e tests/e2e/03-regular-user-qr-scan.spec.ts --debug
 Run this to verify everything passes:
 
 ```bash
-cd /Users/arthur/Projects/playground/claude/laptop-checkout-system/frontend
+cd /Users/arthur/Projects/playground/claude/Intervize/frontend
 pnpm test:e2e tests/e2e/03-regular-user-qr-scan.spec.ts --reporter=list
 ```
 
